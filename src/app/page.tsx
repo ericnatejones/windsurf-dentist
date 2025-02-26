@@ -1,101 +1,148 @@
-import Image from "next/image";
+'use client'
+
+import SearchBar from '@/components/search/SearchBar'
+import { MapComponent } from '@/components/map/MapComponent'
+import { DentistList } from '@/components/dentists/DentistList'
+import { DentistDetails } from '@/components/dentists/DentistDetails'
+import { useState, useEffect, useCallback } from 'react'
+import { DentistListing } from '@/types/dentist'
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const [selectedDentist, setSelectedDentist] = useState<DentistListing | null>(null)
+  const [hoveredDentist, setHoveredDentist] = useState<DentistListing | null>(null)
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false)
+  const [searchResults, setSearchResults] = useState<DentistListing[]>([])
+  const [isLoading, setIsLoading] = useState(false)
+  const [initialLocationLoaded, setInitialLocationLoaded] = useState(false)
+  const [isMapExpanded, setIsMapExpanded] = useState(false)
+  const [isMapHovered, setIsMapHovered] = useState(false)
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+  const handleSearch = async (location: string) => {
+    setIsLoading(true)
+    try {
+      const response = await fetch(`/api/dentists/search?location=${encodeURIComponent(location)}`)
+      if (!response.ok) throw new Error('Search failed')
+      const data = await response.json()
+      setSearchResults(data.dentists)
+      setSelectedDentist(null)
+      setIsDetailsOpen(false)
+    } catch (error) {
+      console.error('Search error:', error)
+      setSearchResults([])
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    // Only try to get location once
+    if (initialLocationLoaded) return
+
+    setInitialLocationLoaded(true)
+    
+    if ('geolocation' in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          try {
+            // Convert coordinates to address using Google's Geocoding API
+            const response = await fetch(
+              `/api/geocode?lat=${position.coords.latitude}&lng=${position.coords.longitude}`
+            )
+            if (!response.ok) throw new Error('Geocoding failed')
+            const { formatted_address } = await response.json()
+            handleSearch(formatted_address)
+          } catch (error) {
+            console.error('Geocoding error:', error)
+            // Default to Sandy, Utah if geocoding fails
+            handleSearch('Sandy, Utah')
+          }
+        },
+        (error) => {
+          console.error('Geolocation error:', error)
+          // Default to Sandy, Utah if geolocation is denied or fails
+          handleSearch('Sandy, Utah')
+        }
+      )
+    } else {
+      // Default to Sandy, Utah if geolocation is not supported
+      handleSearch('Sandy, Utah')
+    }
+  }, [initialLocationLoaded])
+
+  const handleDentistSelect = useCallback((dentist: DentistListing) => {
+    setSelectedDentist(dentist)
+    setIsDetailsOpen(true)
+  }, [])
+
+  const handleCloseDetails = useCallback(() => {
+    setIsDetailsOpen(false)
+  }, [])
+
+  return (
+    <div className="flex flex-col min-h-[calc(100vh-64px)]">
+      <div className="bg-blue-500 py-8 px-4">
+        <div className="max-w-7xl mx-auto">
+          <h1 className="text-4xl font-bold text-white mb-6">Find a Dentist</h1>
+          <SearchBar onSearch={handleSearch} />
+        </div>
+      </div>
+
+      <main className="flex-1 flex flex-col lg:flex-row">
+        {/* List and Map Container */}
+        <div className={`
+          flex-1 flex flex-col lg:flex-row
+          ${isDetailsOpen ? 'lg:w-1/2' : 'lg:w-full'}
+          transition-all duration-300
+        `}>
+          {/* List Section */}
+          <div className={`
+            w-full
+            ${isMapHovered ? 'lg:w-1/3' : 'lg:w-1/2'}
+            ${isDetailsOpen ? 'hidden lg:block lg:w-1/2' : ''}
+            transition-all duration-300
+            overflow-auto
+          `}>
+            <DentistList
+              dentists={searchResults}
+              onDentistSelect={handleDentistSelect}
+              selectedDentistId={selectedDentist?.id}
             />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+          </div>
+
+          {/* Map Section */}
+          <div
+            className={`
+              hidden lg:block
+              ${isMapHovered ? 'lg:w-2/3' : 'lg:w-1/2'}
+              ${isDetailsOpen ? 'lg:w-1/2' : ''}
+              transition-all duration-300 ease-in-out
+              h-[calc(100vh-200px)]
+              relative
+            `}
+            onMouseEnter={() => setIsMapHovered(true)}
+            onMouseLeave={() => setIsMapHovered(false)}
           >
-            Read our docs
-          </a>
+            <MapComponent
+              dentists={searchResults}
+              selectedDentist={selectedDentist}
+              onDentistSelect={handleDentistSelect}
+            />
+          </div>
+        </div>
+
+        {/* Details Panel */}
+        <div className={`
+          ${isDetailsOpen ? 'lg:w-1/2' : 'lg:w-0'}
+          transition-all duration-300
+          overflow-hidden
+        `}>
+          <DentistDetails
+            dentist={selectedDentist}
+            isOpen={isDetailsOpen}
+            onClose={handleCloseDetails}
+          />
         </div>
       </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
     </div>
-  );
+  )
 }
