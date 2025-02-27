@@ -1,4 +1,39 @@
 import { NextResponse } from 'next/server'
+import { DentistListing } from '@/types/dentist'
+
+interface PlaceDetailsResponse {
+  result: {
+    name: string
+    formatted_address: string
+    formatted_phone_number: string
+    website?: string
+    rating?: number
+    user_ratings_total?: number
+    photos?: Array<{
+      photo_reference: string
+      height: number
+      width: number
+    }>
+    opening_hours?: {
+      open_now: boolean
+      weekday_text?: string[]
+    }
+    reviews?: Array<{
+      author_name: string
+      rating: number
+      text: string
+      time: number
+    }>
+    geometry: {
+      location: {
+        lat: number
+        lng: number
+      }
+    }
+    types?: string[]
+  }
+  status: string
+}
 
 export async function GET(
   request: Request,
@@ -8,25 +43,25 @@ export async function GET(
     const { id } = params
     
     // Get the API key from environment variables
-    const apiKey = process.env.GOOGLE_MAPS_API_KEY
+    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
     
     if (!apiKey) {
       return NextResponse.json(
-        { error: 'Server configuration error' },
+        { error: 'Google Maps API key not configured' },
         { status: 500 }
       )
     }
 
     // First, get the place details
     const detailsResponse = await fetch(
-      `https://maps.googleapis.com/maps/api/place/details/json?place_id=${id}&fields=name,rating,user_ratings_total,formatted_address,formatted_phone_number,website,opening_hours,photos,reviews,types,price_level&key=${apiKey}`
+      `https://maps.googleapis.com/maps/api/place/details/json?place_id=${id}&fields=name,rating,user_ratings_total,formatted_address,formatted_phone_number,website,opening_hours,photos,reviews,geometry,types&key=${apiKey}`
     )
 
     if (!detailsResponse.ok) {
       throw new Error('Failed to fetch place details')
     }
 
-    const detailsData = await detailsResponse.json()
+    const detailsData = await detailsResponse.json() as PlaceDetailsResponse
 
     if (detailsData.status !== 'OK') {
       return NextResponse.json(
@@ -38,28 +73,28 @@ export async function GET(
     const place = detailsData.result
     
     // Transform the data into our format
-    const dentist = {
+    const dentist: DentistListing = {
       id: id,
+      placeId: id,
       name: place.name,
-      rating: place.rating,
-      reviewCount: place.user_ratings_total,
+      rating: place.rating || 0,
+      reviewCount: place.user_ratings_total || 0,
       address: place.formatted_address,
-      phone: place.formatted_phone_number,
-      website: place.website,
-      photos: place.photos?.map((photo: any) => 
-        `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photo_reference=${photo.photo_reference}&key=${apiKey}`
-      ) || [],
-      hours: place.opening_hours?.weekday_text || [],
-      reviews: place.reviews?.map((review: any) => ({
-        author: review.author_name,
-        rating: review.rating,
-        text: review.text,
-        time: review.time,
-        authorPhoto: review.profile_photo_url
+      phone: place.formatted_phone_number || '',
+      website: place.website || '',
+      photos: place.photos?.map((photo: any) => ({
+        url: `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photo_reference=${photo.photo_reference}&key=${apiKey}`,
+        height: photo.height,
+        width: photo.width
       })) || [],
-      priceLevel: place.price_level,
-      emergencyCare: place.types?.includes('emergency_dentist') || false,
-      specialties: determineSpecialties(place.types || [])
+      location: place.geometry?.location || { lat: 0, lng: 0 },
+      hours: place.opening_hours?.weekday_text || [],
+      specialties: determineSpecialties(place.types || []),
+      insurances: [],
+      isClaimed: false,
+      isBoosted: false,
+      opening_hours: place.opening_hours,
+      reviews: place.reviews
     }
 
     return NextResponse.json(dentist)
@@ -73,16 +108,13 @@ export async function GET(
 }
 
 function determineSpecialties(types: string[]): Array<{ id: string, name: string }> {
-  const specialtyMap: Record<string, string> = {
+  const specialtyMap: { [key: string]: string } = {
     'dentist': 'General Dentistry',
-    'emergency_dentist': 'Emergency Care',
     'orthodontist': 'Orthodontics',
-    'pediatric_dentist': 'Pediatric Dentistry',
-    'cosmetic_dentist': 'Cosmetic Dentistry',
-    'oral_surgeon': 'Oral Surgery',
-    'endodontist': 'Endodontics',
     'periodontist': 'Periodontics',
-    'prosthodontist': 'Prosthodontics'
+    'endodontist': 'Endodontics',
+    'oral_surgeon': 'Oral Surgery',
+    'pediatric_dentist': 'Pediatric Dentistry'
   }
 
   return types

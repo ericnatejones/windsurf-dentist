@@ -11,17 +11,20 @@ export async function GET(request: Request) {
 
   try {
     const response = await fetch(
-      `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${process.env.GOOGLE_MAPS_API_KEY}`
+      `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`
     )
 
     if (!response.ok) {
-      throw new Error('Geocoding request failed')
+      const errorData = await response.json().catch(() => ({}));
+      console.error('Geocoding error:', errorData);
+      return NextResponse.json({ error: 'Geocoding request failed', details: errorData }, { status: response.status });
     }
 
     const data = await response.json()
 
     if (data.status !== 'OK' || !data.results?.[0]) {
-      throw new Error('No results found')
+      console.error('Geocoding error: No results found', data);
+      return NextResponse.json({ error: 'No results found', status: data.status }, { status: 404 });
     }
 
     // Return the most accurate address
