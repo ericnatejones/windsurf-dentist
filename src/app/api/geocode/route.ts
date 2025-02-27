@@ -1,12 +1,21 @@
 import { NextResponse } from 'next/server'
+import { ApiResponse, ApiErrorResponse } from '@/types/api'
 
-export async function GET(request: Request) {
+interface GeocodeResponse {
+  location: string
+}
+
+export async function GET(request: Request): Promise<ApiResponse<GeocodeResponse> | ApiErrorResponse> {
   const { searchParams } = new URL(request.url)
   const lat = searchParams.get('lat')
   const lng = searchParams.get('lng')
 
   if (!lat || !lng) {
-    return NextResponse.json({ error: 'Missing coordinates' }, { status: 400 })
+    return NextResponse.json({
+      success: false,
+      error: 'Missing coordinates',
+      data: null
+    })
   }
 
   try {
@@ -15,27 +24,32 @@ export async function GET(request: Request) {
     )
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      console.error('Geocoding error:', errorData);
-      return NextResponse.json({ error: 'Geocoding request failed', details: errorData }, { status: response.status });
+      throw new Error('Geocoding request failed')
     }
 
     const data = await response.json()
 
     if (data.status !== 'OK' || !data.results?.[0]) {
-      console.error('Geocoding error: No results found', data);
-      return NextResponse.json({ error: 'No results found', status: data.status }, { status: 404 });
+      return NextResponse.json({
+        success: false,
+        error: 'No results found',
+        data: null
+      })
     }
 
     // Return the most accurate address
     return NextResponse.json({
-      formatted_address: data.results[0].formatted_address
+      success: true,
+      data: {
+        location: data.results[0].formatted_address
+      }
     })
   } catch (error) {
     console.error('Geocoding error:', error)
-    return NextResponse.json(
-      { error: 'Failed to geocode location' },
-      { status: 500 }
-    )
+    return NextResponse.json({
+      success: false,
+      error: 'Failed to geocode location',
+      data: null
+    })
   }
 }

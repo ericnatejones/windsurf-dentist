@@ -10,7 +10,7 @@ interface Prediction {
   placeId: string
 }
 
-export default function SearchBar({ onSearch }: SearchBarProps) {
+export function SearchBar({ onSearch }: SearchBarProps) {
   const [input, setInput] = useState('')
   const [predictions, setPredictions] = useState<Prediction[]>([])
   const [isOpen, setIsOpen] = useState(false)
