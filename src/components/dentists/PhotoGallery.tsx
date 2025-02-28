@@ -9,7 +9,8 @@ interface PhotoGalleryProps {
 }
 
 export function PhotoGallery({ photos }: PhotoGalleryProps) {
-  const [selectedPhoto, setSelectedPhoto] = useState<DentistPhoto | null>(null)
+  const [selectedIndex, setSelectedIndex] = useState(0)
+  const [showModal, setShowModal] = useState(false)
 
   if (!photos || photos.length === 0) {
     return null
@@ -17,48 +18,70 @@ export function PhotoGallery({ photos }: PhotoGalleryProps) {
 
   return (
     <div className="space-y-2">
-      <div className="grid grid-cols-3 gap-2">
-        {photos.slice(0, 6).map((photo, index) => (
-          <button
-            key={index}
-            onClick={() => setSelectedPhoto(photo)}
-            className="relative w-full aspect-square overflow-hidden rounded-lg hover:opacity-90 transition-opacity"
-          >
-            <Image
-              src={photo.url}
-              alt={`Dentist office photo ${index + 1}`}
-              fill
-              className="object-cover"
-              sizes="(max-width: 768px) 33vw, 200px"
-            />
-          </button>
-        ))}
+      {/* Main Photo */}
+      <div 
+        className="relative h-40 rounded-lg overflow-hidden cursor-pointer"
+        onClick={() => setShowModal(true)}
+      >
+        <Image
+          src={photos[selectedIndex].url}
+          alt={`Photo ${selectedIndex + 1}`}
+          fill
+          className="object-cover"
+          sizes="(max-width: 768px) 100vw, 768px"
+        />
       </div>
 
+      {/* Thumbnails */}
+      {photos.length > 1 && (
+        <div className="flex gap-2 overflow-x-auto pb-2">
+          {photos.map((photo, index) => (
+            <button
+              key={index}
+              onClick={() => setSelectedIndex(index)}
+              className={`
+                relative w-14 h-14 flex-shrink-0 rounded-md overflow-hidden 
+                transition-all duration-200
+                ${index === selectedIndex ? 'ring-2 ring-blue-500' : 'hover:opacity-80'}
+              `}
+            >
+              <Image
+                src={photo.url}
+                alt={`Thumbnail ${index + 1}`}
+                fill
+                className="object-cover"
+                sizes="56px"
+              />
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* Modal */}
-      {selectedPhoto && (
+      {showModal && (
         <div
           className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4"
-          onClick={() => setSelectedPhoto(null)}
+          onClick={() => setShowModal(false)}
         >
           <div className="relative max-w-4xl w-full h-full flex items-center justify-center">
             <button
-              onClick={() => setSelectedPhoto(null)}
+              onClick={(e) => {
+                e.stopPropagation()
+                setShowModal(false)
+              }}
               className="absolute top-4 right-4 text-white hover:text-gray-300"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
-            <div className="relative w-full aspect-video">
-              <Image
-                src={selectedPhoto.url}
-                alt="Selected dentist office photo"
-                fill
-                className="object-contain"
-                sizes="(max-width: 768px) 100vw, 800px"
-              />
-            </div>
+            <Image
+              src={photos[selectedIndex].url}
+              alt={`Full size photo ${selectedIndex + 1}`}
+              className="max-h-[80vh] max-w-full object-contain"
+              width={800}
+              height={600}
+            />
           </div>
         </div>
       )}
