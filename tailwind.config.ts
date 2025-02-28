@@ -11,6 +11,20 @@ export default {
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",
+        "primary-blue": "var(--primary-blue)",
+        "secondary-blue": "var(--secondary-blue)",
+        "cyan-bg": "var(--cyan-bg)",
+        cyan: {
+          400: "#56C5DA",
+        },
+        blue: {
+          600: "#0069B4",
+          700: "#005A9E",
+          800: "#004B85",
+        },
+      },
+      fontFamily: {
+        sans: ['Inter', 'sans-serif'],
       },
     },
   },

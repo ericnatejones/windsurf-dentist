@@ -92,8 +92,8 @@ export function MapComponent({
       if (isCluster) {
         // Cluster marker
         const markerDot = document.createElement('div')
-        markerDot.className = `w-6 h-6 rounded-full flex items-center justify-center shadow-lg 
-          bg-blue-500 text-white border-2 border-white text-sm font-semibold transition-transform duration-200`
+        markerDot.className = `w-12 h-12 rounded-full flex items-center justify-center shadow-lg 
+          bg-blue-500 text-white border-2 border-white text-lg font-bold transition-transform duration-200`
         
         // Add a small indicator if the cluster can be zoomed in further
         if (cluster.canZoomIn) {

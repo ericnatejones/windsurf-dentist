@@ -18,12 +18,19 @@ export function DentistList({
   onDentistSelect 
 }: DentistListProps) {
   const listRefs = useRef<Map<string, HTMLDivElement>>(new Map())
+  const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (hoveredDentist) {
       const element = listRefs.current.get(hoveredDentist.id)
-      if (element) {
-        // Instead of scrolling the window, just add a highlight class
+      if (element && containerRef.current) {
+        // Smooth scroll to the hovered dentist
+        element.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'nearest' 
+        })
+        
+        // Add highlight class
         element.classList.add('highlight-dentist')
       }
     } else {
@@ -43,7 +50,7 @@ export function DentistList({
   }
 
   return (
-    <div className="overflow-auto h-full">
+    <div ref={containerRef} className="overflow-auto h-[calc(100vh-16rem)] md:h-[calc(100vh-12rem)]">
       <div className="space-y-4 p-4">
         {dentists.map((dentist) => (
           <div
@@ -53,9 +60,9 @@ export function DentistList({
               else listRefs.current.delete(dentist.id)
             }}
             className={`
-              p-4 rounded-lg shadow-sm border transition-all duration-200
+              p-4 rounded-lg shadow-sm border transition-all duration-300 ease-in-out
               ${selectedDentistId === dentist.id ? 'border-blue-500 bg-blue-50' : 'border-gray-200 bg-white'}
-              ${hoveredDentist?.id === dentist.id ? 'highlight-dentist' : ''}
+              ${hoveredDentist?.id === dentist.id ? 'border-blue-400 shadow-md bg-blue-50' : ''}
               hover:shadow-md cursor-pointer
             `}
             onClick={() => onDentistSelect(dentist)}
