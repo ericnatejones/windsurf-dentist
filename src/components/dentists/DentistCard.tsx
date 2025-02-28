@@ -1,7 +1,7 @@
 'use client'
 
 import { DentistListing } from '@/types/dentist'
-import Image from 'next/image'
+import { GoogleMapImage } from '@/components/common/GoogleMapImage'
 
 interface DentistCardProps {
   dentist: DentistListing
@@ -26,8 +26,8 @@ export function DentistCard({ dentist, isSelected, onClick }: DentistCardProps) 
         {/* Thumbnail */}
         {dentist.photos && dentist.photos.length > 0 ? (
           <div className="relative w-24 h-24 flex-shrink-0 rounded-lg overflow-hidden">
-            <Image
-              src={dentist.photos[0].url}
+            <GoogleMapImage
+              photoUrl={dentist.photos[0].url}
               alt={`${dentist.name} thumbnail`}
               fill
               className="object-cover"

@@ -18,6 +18,7 @@ export function MobileMapCard({
   onClusterSelect
 }: MobileMapCardProps) {
   const [isExpanded, setIsExpanded] = useState(false)
+  const [hoveredDentist, setHoveredDentist] = useState<DentistListing | null>(null)
 
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden mb-4">
@@ -27,7 +28,9 @@ export function MobileMapCard({
           <MapComponent
             dentists={dentists}
             selectedDentist={selectedDentist}
+            hoveredDentist={hoveredDentist}
             onDentistSelect={onDentistSelect}
+            onDentistHover={setHoveredDentist}
             onClusterSelect={onClusterSelect}
           />
           {/* Semi-transparent overlay */}
@@ -69,7 +72,9 @@ export function MobileMapCard({
           <MapComponent
             dentists={dentists}
             selectedDentist={selectedDentist}
+            hoveredDentist={hoveredDentist}
             onDentistSelect={onDentistSelect}
+            onDentistHover={setHoveredDentist}
             onClusterSelect={onClusterSelect}
           />
         </div>

@@ -1,8 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import Image from 'next/image'
 import { DentistPhoto } from '@/types/dentist'
+import { GoogleMapImage } from '@/components/common/GoogleMapImage'
 
 interface PhotoGalleryProps {
   photos: DentistPhoto[]
@@ -23,8 +23,8 @@ export function PhotoGallery({ photos }: PhotoGalleryProps) {
         className="relative h-40 rounded-lg overflow-hidden cursor-pointer"
         onClick={() => setShowModal(true)}
       >
-        <Image
-          src={photos[selectedIndex].url}
+        <GoogleMapImage
+          photoUrl={photos[selectedIndex].url}
           alt={`Photo ${selectedIndex + 1}`}
           fill
           className="object-cover"
@@ -45,8 +45,8 @@ export function PhotoGallery({ photos }: PhotoGalleryProps) {
                 ${index === selectedIndex ? 'ring-2 ring-blue-500' : 'hover:opacity-80'}
               `}
             >
-              <Image
-                src={photo.url}
+              <GoogleMapImage
+                photoUrl={photo.url}
                 alt={`Thumbnail ${index + 1}`}
                 fill
                 className="object-cover"
@@ -75,8 +75,8 @@ export function PhotoGallery({ photos }: PhotoGalleryProps) {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
-            <Image
-              src={photos[selectedIndex].url}
+            <GoogleMapImage
+              photoUrl={photos[selectedIndex].url}
               alt={`Full size photo ${selectedIndex + 1}`}
               className="max-h-[80vh] max-w-full object-contain"
               width={800}

@@ -2,7 +2,7 @@
 
 import { useRef, useEffect } from 'react'
 import { DentistListing } from '@/types/dentist'
-import Image from 'next/image'
+import { GoogleMapImage } from '@/components/common/GoogleMapImage'
 
 interface DentistListProps {
   dentists: DentistListing[]
@@ -23,8 +23,14 @@ export function DentistList({
     if (hoveredDentist) {
       const element = listRefs.current.get(hoveredDentist.id)
       if (element) {
-        element.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+        // Instead of scrolling the window, just add a highlight class
+        element.classList.add('highlight-dentist')
       }
+    } else {
+      // Remove highlight from all dentist cards when hover ends
+      listRefs.current.forEach(element => {
+        element.classList.remove('highlight-dentist')
+      })
     }
   }, [hoveredDentist])
 
@@ -49,7 +55,7 @@ export function DentistList({
             className={`
               p-4 rounded-lg shadow-sm border transition-all duration-200
               ${selectedDentistId === dentist.id ? 'border-blue-500 bg-blue-50' : 'border-gray-200 bg-white'}
-              ${hoveredDentist?.id === dentist.id ? 'transform scale-[1.02] border-blue-300' : ''}
+              ${hoveredDentist?.id === dentist.id ? 'highlight-dentist' : ''}
               hover:shadow-md cursor-pointer
             `}
             onClick={() => onDentistSelect(dentist)}
@@ -57,8 +63,8 @@ export function DentistList({
             <div className="flex gap-3">
               {dentist.photos && dentist.photos.length > 0 && (
                 <div className="relative w-16 h-16 flex-shrink-0 rounded-md overflow-hidden">
-                  <Image
-                    src={dentist.photos[0].url}
+                  <GoogleMapImage
+                    photoUrl={dentist.photos[0].url}
                     alt={`${dentist.name} thumbnail`}
                     fill
                     className="object-cover"

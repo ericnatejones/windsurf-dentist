@@ -2,18 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { GooglePlaceDetails } from '@/types/google-places'
 import { DetailedDentist } from '@/types/dentist'
 
-interface RouteContext {
-  params: {
-    id: string
-  }
-}
-
 export async function GET(
   request: NextRequest,
-  { params }: RouteContext
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const placeId = params.id
+    const placeId = (await params).id
 
     if (!placeId) {
       return NextResponse.json({

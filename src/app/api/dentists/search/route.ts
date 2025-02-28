@@ -7,7 +7,7 @@ export async function GET(
   request: NextRequest
 ): Promise<ApiResponse<DentistSearchResponse> | ApiErrorResponse> {
   try {
-    const { searchParams } = new URL(request.url)
+    const searchParams = request.nextUrl.searchParams
     const location = searchParams.get('location')
     const pageToken = searchParams.get('pageToken')
 
